@@ -29,9 +29,16 @@ jobs:
         ref: ${{ github.event.workflow_run.head_branch }}
 
     - name: Merge dev into main
-      uses: everlytic/branch-merge@1.1.2
-      with:
-        github_token: ${{ steps.generate_token.outputs.token }}
-        source_ref: ${{ github.event.workflow_run.head_branch }}
-        target_branch: 'main'
-        commit_message_template: 'merge: `{source_ref}` into `{target_branch}`'
+      env:
+        GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
+      run: |
+        git config --global user.email "ascension-eip-app[bot]@users.noreply.github.com"
+        git config --global user.name "Ascension-eip-app[bot]"
+
+        git fetch origin main
+        git checkout main
+        git pull origin main
+
+        git merge origin/${{ github.event.workflow_run.head_branch }} --no-ff -m "merge: \`${{ github.event.workflow_run.head_branch }}\` into \`main\`"
+
+        git push origin main
