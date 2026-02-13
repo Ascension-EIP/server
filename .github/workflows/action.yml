@@ -1,0 +1,49 @@
+############################ CONFIGURATION ####################################
+name: ascension-server-default-check
+
+on: [push, pull_request]
+
+env:
+    GITHUB_ACTIONS: true
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref_name }}
+    cancel-in-progress: true
+###############################################################################
+
+
+
+############################ JOBS #############################################
+jobs:
+
+
+    ######################## COMMIT & BRANCH ##################################
+    check_commit_and_branch:
+        runs-on: ubuntu-latest
+
+        #################### STEPS ############################################
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4.1.1
+              with:
+                fetch-depth: 0
+
+            - name: Launch commit checker
+              run: |
+                COMMIT_NAME=$(git log --format="%s" -1)
+                .github/scripts/check_commit "$COMMIT_NAME"
+
+            - name: Launch branch checker
+              run: |
+                if [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then
+                    BRANCH_NAME="${GITHUB_HEAD_REF}"
+                else
+                    BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+                fi
+                echo "Branch detected: $BRANCH_NAME"
+                .github/scripts/check_branch "$BRANCH_NAME"
+              env:
+                GITHUB_HEAD_REF: ${{ github.head_ref }}
+    ###########################################################################
+
+###############################################################################
